@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slider</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      padding: 0 5px;
+    }
+
+    .slider-viewport {
+      width: 80%; /* Adjust the width as needed */
+      overflow: hidden;
+      position: relative;
+    }
+
+    .slider-container {
+      width: 100%;
+      display: flex;
+    }
+
+    .arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      font-size: 24px;
+      z-index: 1; /* Ensure the buttons are above the cards */
+    }
+
+    .prev {
+      left: 10px;
+    }
+
+    .next {
+      right: 10px;
+    }
+
+    .slider-wrapper {
+      display: flex;
+      position: relative;
+      transition: transform 0.5s ease-in-out;
+      width: 100%;
+      gap: 10px;
+    }
+
+    .card {
+      flex: 0 0 calc((100% - 3 * 10px) / 4); /* Adjust for the gap */
+      box-sizing: border-box;
+      padding: 20px;
+      text-align: center;
+      border: 1px solid #ccc;
+      max-width: 100%;
+    }
+
+    @media screen and (max-width: 1023px) {
+      .card {
+        flex: 0 0 calc((100% - 2 * 10px) / 3); /* Adjust for the gap */
+      }
+    }
+
+    @media screen and (max-width: 767px) {
+      .card {
+        flex: 0 0 calc((100% - 1 * 10px) / 2); /* Adjust for the gap */
+      }
+    }
+
+    @media screen and (max-width: 450px) {
+      .card {
+        flex: 1 0 calc(100% - 2 * 10px); /* Adjust for the gap */
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="slider-viewport">
+  <div class="slider-container">
+    <div class="arrow prev" onclick="prevSlide()">&#9664;</div>
+    <div class="slider-wrapper" id="sliderWrapper">
+      <div class="card">Angenehme Arbeitsatmosphäre</div>
+      <div class="card">Unbefristeter Vertrag</div>
+      <div class="card">Attraktives Gehalt</div>
+      <div class="card">Work-Life-Balance</div>
+      <div class="card">Minutengenaue Zeiterfassung</div>
+      <div class="card">Freizeitausgleich</div>
+      <div class="card">Alter & Gesundheit</div>
+      <div class="card">Mitarbeiterrabatte</div>
+      <div class="card">Fahrradleasing</div>
+      <div class="card">Kostenloser Parkplatz</div>
+      <div class="card">Kostenlose Verpflegung</div>
+      <div class="card">Teamevents</div>
+      <div class="card">Sorgfältige Einarbeitung</div>
+      <div class="card">Bildungsmöglichkeiten</div>
+      <div class="card">Chancengleichheit</div>
+      <div class="card" id="lastCard">#nichtohnemeinteam</div>
+    </div>
+    <div class="arrow next" onclick="nextSlide()">&#9654;</div>
+  </div>
+</div>
+
+<script>
+let currentIndex = 0;
+const sliderWrapper = document.getElementById('sliderWrapper');
+const cards = document.querySelectorAll('.card');
+let cardWidth = cards[0].offsetWidth;
+let startX = 0;
+let isDragging = false;
+const gap = 10; // Adjust this value based on the actual gap in your styles
+
+function updateCardWidth() {
+  const style = window.getComputedStyle(cards[0]);
+  const cardPadding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+  cardWidth = cards[0].offsetWidth + cardPadding;
+}
+
+// Recalculate maxIndex on window resize
+window.addEventListener('resize', () => {
+  updateCardWidth();
+  showSlide(currentIndex);
+});
+
+// Event listeners for mouse events
+sliderWrapper.addEventListener('mousedown', handleDragStart);
+window.addEventListener('mousemove', handleDragMove);
+window.addEventListener('mouseup', handleDragEnd);
+
+// Event listeners for touch events
+sliderWrapper.addEventListener('touchstart', handleDragStart);
+window.addEventListener('touchmove', handleDragMove);
+window.addEventListener('touchend', handleDragEnd);
+
+function handleDragStart(e) {
+  isDragging = true;
+  startX = e.clientX || e.touches[0].clientX;
+}
+
+function handleDragMove(e) {
+  if (!isDragging) return;
+
+  const currentX = e.clientX || e.changedTouches[0].clientX;
+
+  // Calculate the new translate value
+  const newTranslateValue = currentTranslateValue - (currentX - startX);
+
+  // Update the card position based on the new translate value
+  const cardPosition = newTranslateValue + (currentIndex * (cardWidth + gap));
+  sliderWrapper.style.transform = `translateX(${cardPosition}px)`;
+}
+
+
+
+function handleDragEnd() {
+  if (!isDragging) return;
+
+  // Calculate the index based on the drag distance
+  const dragDistance = startX - (event.clientX || event.changedTouches[0].clientX);
+  const threshold = cardWidth / 5;
+
+  if (dragDistance > threshold) {
+    nextSlide();
+  } else if (dragDistance < -threshold) {
+    prevSlide();
+  } else {
+    showSlide(currentIndex);
+  }
+
+  // Calculate the adjust transition
+  const adjustTransition = currentTranslateValue - translateValue;
+
+  // Update the card position based on the final translate value
+  const cardPosition = translateValue + (currentIndex * (cardWidth + gap));
+  sliderWrapper.style.transform = `translateX(${cardPosition}px)`;
+
+  // Set the transition property
+  sliderWrapper.style.transition = 'transform 0.5s ease-in-out';
+
+  isDragging = false;
+}
+
+
+
+function showSlide(index) {
+  const totalCardWidth = cards.length * cardWidth;
+  const sliderWidth = sliderWrapper.offsetWidth;
+
+  // Calculate the number of visible cards
+  const numVisibleCards = Math.min(totalCardWidth, sliderWidth) / (cardWidth + gap);
+
+  // Handle looping effect
+  if (index < 0) {
+    index = cards.length - 1;
+  } else if (index > cards.length - 1) {
+    index = 0;
+  }
+
+  // Calculate the translation based on the current index
+  const translateValue = -index * (cardWidth + gap);
+
+  // Set transition property for the sliderWrapper
+  sliderWrapper.style.transition = 'transform 0.5s ease-in-out';
+
+  // Position the cards
+  const cardPosition = translateValue + (index * (cardWidth + gap));
+  sliderWrapper.style.transform = `translateX(${cardPosition}px)`;
+
+  // Set the visibility of cards
+  for (let i = 0; i < cards.length; i++) {
+    cards[i].style.display = (i < numVisibleCards) ? 'block' : 'none';
+  }
+
+  currentIndex = index;
+}
+
+
+
+function prevSlide() {
+  showSlide(currentIndex - 1);
+}
+
+function nextSlide() {
+  showSlide(currentIndex + 1);
+}
+
+// Initial setup
+updateCardWidth();
+showSlide(currentIndex);
+</script>
+
+</body>
+</html>
